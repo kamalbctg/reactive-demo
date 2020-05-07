@@ -8,17 +8,17 @@ import reactor.core.publisher.Flux;
 import java.time.Duration;
 
 
-class FluxSubscriptionTests {
+class SubscriptionTests {
 
     @Test
-    void streamOfFluxSubscriptionTest() {
+    void subscriptionTest() {
         Flux.just("A", "B", "C")
                 .log()
                 .subscribe(System.out::println);
     }
 
     @Test
-    void streamOfFluxSubscriptionWithError() {
+    void subscriptionErrorTest() {
         Flux.just("A", "B", "C")
                 .concatWith(Flux.error(new RuntimeException("Opps! something went wrong")))
                 .log()
@@ -28,7 +28,7 @@ class FluxSubscriptionTests {
     }
 
     @Test
-    void streamOfFluxSubscriptionWithErrorHandling() {
+    void subscriptionWithErrorReturn() {
         Flux.just("A", "B")
                 .concatWith(Flux.error(new RuntimeException("Opps! something went wrong")))
                 .concatWithValues("C")
@@ -40,18 +40,8 @@ class FluxSubscriptionTests {
     }
 
     @Test
-    void streamOfFluxSubscriptionWithTake() throws InterruptedException {
-        Flux.interval(Duration.ofSeconds(1))
-                .take(2)
-                .log()
-                .subscribe(
-                        System.out::println);
-        Thread.sleep(5000);
-    }
-
-    @Test
-    void streamOfFluxSubscriptionWithSpecifiedRequestByUsingSubscriberImpl() throws InterruptedException {
-        Flux.range(1, 6)
+    void subscriptionWithBackPressure() throws InterruptedException {
+        Flux.range(1, 10).delayElements(Duration.ofSeconds(1))
                 .log()
                 .subscribe(new Subscriber<Integer>() {
                     public final int PAGE_SIZE = 2;
@@ -83,6 +73,6 @@ class FluxSubscriptionTests {
 
                     }
                 });
-        Thread.sleep(5000);
+        Thread.sleep(11000);
     }
 }
