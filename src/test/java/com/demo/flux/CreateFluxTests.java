@@ -20,16 +20,18 @@ import java.util.Random;
 class CreateFluxTests {
 
     @Test
-    void emptyFluxTest() {
+    void emptyFlux() {
+        //Create a publisher that completes without emitting any item.
         Flux emptyFlux = Flux.empty().log();
-        StepVerifier.create(emptyFlux)
-                .verifyComplete();
+
+        StepVerifier.create(emptyFlux).verifyComplete();
     }
 
     @Test
     void streamOfFluxWithJust() {
-        Flux<String> fluxTest = Flux.just("A", "B", "C")
-                .log();
+        //Create N publishers that emits the provided elements and then completes.
+        Flux<String> fluxTest = Flux.just("A", "B", "C").log();
+
         StepVerifier.create(fluxTest)
                 .expectNext("A")
                 .expectNext("B")
@@ -39,8 +41,8 @@ class CreateFluxTests {
 
     @Test
     void streamOfFluxWithIterable() {
-        Flux<String> fluxTest = Flux.fromIterable(Arrays.asList("A", "B", "C"))
-                .log();
+        Flux<String> fluxTest = Flux.fromIterable(Arrays.asList("A", "B", "C")).log();
+
         StepVerifier.create(fluxTest)
                 .expectNext("A")
                 .expectNext("B")
@@ -50,7 +52,10 @@ class CreateFluxTests {
 
     @Test
     void streamOfFluxWithRange() {
+        //Emits a sequence of count incrementing integers, starting from start.
+
         Flux<Integer> fluxTest = Flux.range(1, 3).log();
+
         StepVerifier.create(fluxTest)
                 .expectNext(1)
                 .expectNext(2)
@@ -60,8 +65,11 @@ class CreateFluxTests {
 
     @Test
     void streamOfFluxWithInterval() {
+        //Emits long values starting with 0 and incrementing at specified time intervals on the global timer.
+        Flux<Long> fluxTest = Flux.interval(Duration.ofSeconds(1)).take(2).log();
+
         StepVerifier
-                .withVirtualTime(() -> Flux.interval(Duration.ofSeconds(1)).take(2).log())
+                .withVirtualTime(() -> fluxTest)
                 .expectSubscription()
                 .expectNoEvent(Duration.ofSeconds(1))
                 .expectNext(0L)
@@ -70,12 +78,36 @@ class CreateFluxTests {
                 .verifyComplete();
     }
 
+    @Test
+    void streamOfFluxWithFromArray() {
+        //Create a Flux that emits the items contained in the provided array..
+        Flux<String> fluxTest = Flux.fromArray(new String[] {"A", "B", "C"}).log();
+
+        StepVerifier.create(fluxTest)
+                .expectNext("A")
+                .expectNext("B")
+                .expectNext("C")
+                .verifyComplete();
+    }
+
+    @Test
+    void streamOfFluxWithFromStream() {
+        //Create a Flux that emits the items contained in the provided Stream.
+        Flux<String> fluxTest = Flux.fromStream(Arrays.asList("A", "B", "C").stream()).log();
+
+        StepVerifier.create(fluxTest)
+                .expectNext("A")
+                .expectNext("B")
+                .expectNext("C")
+                .verifyComplete();
+    }
+
     //In streams, errors are terminal events. This means that from the point we encounter an error,
     // our stream is not processed by the designated operator.
     @Test
     void streamOfFluxWithError() {
-        Flux<Integer> fluxTest = Flux.just(1, 2, 0,5)
-                .map(d -> 100/d)
+        Flux<Integer> fluxTest = Flux.just(1, 2, 0, 5)
+                .map(d -> 100 / d)
                 .log();
         StepVerifier.create(fluxTest)
                 .expectNext(100)
@@ -87,8 +119,8 @@ class CreateFluxTests {
 
     @Test
     void streamOfFluxWithError2() {
-        Flux<Integer> fluxTest = Flux.just(1, 2, 0,5)
-                .map(d -> 100/d)
+        Flux<Integer> fluxTest = Flux.just(1, 2, 0, 5)
+                .map(d -> 100 / d)
                 .onErrorReturn(Integer.MAX_VALUE)
                 .log();
         StepVerifier.create(fluxTest)
@@ -101,9 +133,9 @@ class CreateFluxTests {
 
     @Test
     void streamOfFluxWithError3() {
-        Flux<Integer> fluxTest = Flux.just(1, 2, 0,5)
-                .map(d -> 100/d)
-                .onErrorResume(ex -> Flux.just(6,7)) //provide a fallback publisher
+        Flux<Integer> fluxTest = Flux.just(1, 2, 0, 5)
+                .map(d -> 100 / d)
+                .onErrorResume(ex -> Flux.just(6, 7)) //provide a fallback publisher
                 .log();
         StepVerifier.create(fluxTest)
                 .expectNext(100)
@@ -114,11 +146,10 @@ class CreateFluxTests {
     }
 
 
-
     @Test
     void streamOfFluxWithError4() {
-        Flux<Integer> fluxTest = Flux.just(1, 2, 0,5)
-                .map(d -> 100/d)
+        Flux<Integer> fluxTest = Flux.just(1, 2, 0, 5)
+                .map(d -> 100 / d)
                 .onErrorMap(ex -> new IllegalArgumentException("opps")) //provide a fallback publisher
                 .log();
         StepVerifier.create(fluxTest)
@@ -131,8 +162,8 @@ class CreateFluxTests {
 
     @Test
     void streamOfFluxWithError41() {
-        Flux<Integer> fluxTest = Flux.just(1, 2, 0,5)
-                .map(d -> 100/d)
+        Flux<Integer> fluxTest = Flux.just(1, 2, 0, 5)
+                .map(d -> 100 / d)
                 .doOnError(System.out::println) //It’ll catch, perform side-effect operation and rethrow the exception
                 .log();
         StepVerifier.create(fluxTest)
@@ -141,15 +172,16 @@ class CreateFluxTests {
                 .expectError(ArithmeticException.class)
                 .verify();
     }
+
     @Test
     void streamOfFluxWithError5() {
         Flux<String> fluxTest = Flux.just("A", "B", "C")
                 .concatWith(Flux.error(new RuntimeException("Opps")))
                 .doFinally(it -> {
-                    if(SignalType.ON_COMPLETE == it){
+                    if (SignalType.ON_COMPLETE == it) {
                         System.out.println("Complete");
                     }
-                    if(SignalType.ON_ERROR == it){
+                    if (SignalType.ON_ERROR == it) {
                         System.out.println("Error");
                     }
                 })
@@ -302,11 +334,11 @@ class CreateFluxTests {
     public void coldPublisher() throws InterruptedException {
         Flux<String> flux = Flux.just("a", "b", "c").delayElements(Duration.ofSeconds(1));
 
-        flux.log().subscribe( it -> System.out.println("subscribe-1"+ it));
+        flux.log().subscribe(it -> System.out.println("subscribe-1" + it));
 
         Thread.sleep(Duration.ofSeconds(1).toMillis());
 
-        flux.log().subscribe( it -> System.out.println("subscribe-2"+ it));
+        flux.log().subscribe(it -> System.out.println("subscribe-2" + it));
     }
 
     //Emit data from the beginning
@@ -317,11 +349,11 @@ class CreateFluxTests {
                 .publish();
         flux.connect();
 
-        flux.log().subscribe( it -> System.out.println("subscribe-1"+ it));
+        flux.log().subscribe(it -> System.out.println("subscribe-1" + it));
 
-       Thread.sleep(Duration.ofSeconds(3).toMillis());
+        Thread.sleep(Duration.ofSeconds(3).toMillis());
 
-       flux.log().subscribe( it -> System.out.println("subscribe-2"+ it));
+        flux.log().subscribe(it -> System.out.println("subscribe-2" + it));
         Thread.sleep(Duration.ofSeconds(6).toMillis());
     }
 
@@ -332,11 +364,11 @@ class CreateFluxTests {
                 .share();
 
 
-        flux.log().subscribe( it -> System.out.println("subscribe-1"+ it));
+        flux.log().subscribe(it -> System.out.println("subscribe-1" + it));
 
         Thread.sleep(Duration.ofSeconds(3).toMillis());
 
-        flux.log().subscribe( it -> System.out.println("subscribe-2"+ it));
+        flux.log().subscribe(it -> System.out.println("subscribe-2" + it));
         Thread.sleep(Duration.ofSeconds(6).toMillis());
     }
 
