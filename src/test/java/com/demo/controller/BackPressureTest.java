@@ -5,13 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.scheduler.Schedulers;
 
@@ -46,6 +42,7 @@ class BackPressureTest {
                     private Subscription subscription;
                     private Integer count = 0;
                     private Integer limit = 3;
+
                     @Override
                     public void onNext(Product t) {
                         count++;
@@ -53,7 +50,7 @@ class BackPressureTest {
                             count = 0;
                             subscription.request(limit);
                         }
-                        System.out.println(">>"+t.getName());
+                        System.out.println(">>" + t.getName());
                     }
 
                     @Override
@@ -69,7 +66,7 @@ class BackPressureTest {
 
                     @Override
                     public void onComplete() {
-                    // TODO Auto-generated method stub
+                        // TODO Auto-generated method stub
                     }
                 });
 
@@ -87,6 +84,7 @@ class BackPressureTest {
                     private Subscription subscription;
                     private Integer count = 0;
                     private Integer limit = 3;
+
                     @Override
                     public void onNext(Product t) {
                         count++;
@@ -94,7 +92,7 @@ class BackPressureTest {
                             count = 0;
                             subscription.request(limit);
                         }
-                        System.out.println(">>"+t.getName());
+                        System.out.println(">>" + t.getName());
                     }
 
                     @Override
@@ -110,7 +108,7 @@ class BackPressureTest {
 
                     @Override
                     public void onComplete() {
-                    // TODO Auto-generated method stub
+                        // TODO Auto-generated method stub
                     }
                 });
 

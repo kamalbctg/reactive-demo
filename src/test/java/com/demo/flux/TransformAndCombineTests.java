@@ -3,7 +3,6 @@ package com.demo.flux;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.ConnectableFlux;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.SignalType;
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
@@ -13,121 +12,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-class CreateFluxTests {
-
-
-    //In streams, errors are terminal events. This means that from the point we encounter an error,
-    // our stream is not processed by the designated operator.
-    @Test
-    void streamOfFluxWithError() {
-        Flux<Integer> fluxTest = Flux.just(1, 2, 0, 5)
-                .map(d -> 100 / d)
-                .log();
-        StepVerifier.create(fluxTest)
-                .expectNext(100)
-                .expectNext(50)
-                .expectError(ArithmeticException.class)
-                .verify();
-    }
-
+class TransformAndCombineTests {
 
     @Test
-    void streamOfFluxWithError2() {
-        Flux<Integer> fluxTest = Flux.just(1, 2, 0, 5)
-                .map(d -> 100 / d)
-                .onErrorReturn(Integer.MAX_VALUE)
-                .log();
-        StepVerifier.create(fluxTest)
-                .expectNext(100)
-                .expectNext(50)
-                .expectNext(Integer.MAX_VALUE)
-                .verifyComplete();
-    }
-
-
-    @Test
-    void streamOfFluxWithError3() {
-        Flux<Integer> fluxTest = Flux.just(1, 2, 0, 5)
-                .map(d -> 100 / d)
-                .onErrorResume(ex -> Flux.just(6, 7)) //provide a fallback publisher
-                .log();
-        StepVerifier.create(fluxTest)
-                .expectNext(100)
-                .expectNext(50)
-                .expectNext(6)
-                .expectNext(7)
-                .verifyComplete();
-    }
-
-
-    @Test
-    void streamOfFluxWithError4() {
-        Flux<Integer> fluxTest = Flux.just(1, 2, 0, 5)
-                .map(d -> 100 / d)
-                .onErrorMap(ex -> new IllegalArgumentException("opps")) //provide a fallback publisher
-                .log();
-        StepVerifier.create(fluxTest)
-                .expectNext(100)
-                .expectNext(50)
-                .expectError(IllegalArgumentException.class)
-                .verify();
-    }
-
-
-    @Test
-    void streamOfFluxWithError41() {
-        Flux<Integer> fluxTest = Flux.just(1, 2, 0, 5)
-                .map(d -> 100 / d)
-                .doOnError(System.out::println) //It’ll catch, perform side-effect operation and rethrow the exception
-                .log();
-        StepVerifier.create(fluxTest)
-                .expectNext(100)
-                .expectNext(50)
-                .expectError(ArithmeticException.class)
-                .verify();
-    }
-
-    @Test
-    void streamOfFluxWithError5() {
-        Flux<String> fluxTest = Flux.just("A", "B", "C")
-                .concatWith(Flux.error(new RuntimeException("Opps")))
-                .doFinally(it -> {
-                    if (SignalType.ON_COMPLETE == it) {
-                        System.out.println("Complete");
-                    }
-                    if (SignalType.ON_ERROR == it) {
-                        System.out.println("Error");
-                    }
-                })
-                .log();
-        StepVerifier.create(fluxTest)
-                .expectNext("A")
-                .expectNext("B")
-                .expectNext("C")
-                .expectError(RuntimeException.class)
-                .verify();
-    }
-
-    @Test
-    void streamOfFluxWithError6() {
-        Flux<String> fluxTest = Flux.just("A", "B", "C")
-                .concatWith(Flux.error(new RuntimeException("Opps")))
-                .onErrorContinue((throwable, o) -> {
-                    System.out.println(o);
-                })
-                .concatWith(Flux.just("D"))
-                .log();
-        StepVerifier.create(fluxTest)
-                .expectNext("A")
-                .expectNext("B")
-                .expectNext("C")
-                .expectError(RuntimeException.class)
-                .verify();
-    }
-
-
-    @Test
-    void streamOfFluxWithFilter() {
+    void publisherWithFilter() {
+        /**
+         * Evaluate each source value against the given Predicate. If the predicate test
+         * succeeds, the value is emitted. If the predicate test fails, the value is ignored
+         **/
         Flux<String> fluxTest = Flux.just("Dhaka", "Chittagong", "Sylhet", "Feni")
                 .filter(name -> name.length() > 4)
                 .log();
@@ -138,6 +30,9 @@ class CreateFluxTests {
 
     @Test
     void streamOfFluxWithMap() {
+        /**
+         * Transform the items emitted by this Flux by applying a synchronous function to each item
+         */
         Flux.fromIterable(getUsers())
                 .map(u -> toLowerCase(u.getName()))
                 .doOnNext(System.out::println)

@@ -1,7 +1,7 @@
 package com.demo.support;
 
-import com.demo.repository.ProductRepository;
 import com.demo.model.Product;
+import com.demo.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.data.mongodb.core.ReactiveMongoOperations;

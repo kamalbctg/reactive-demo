@@ -9,8 +9,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.time.Duration;
-
 @RestController
 @RequestMapping("v1")
 public class ProductController {
@@ -35,12 +33,12 @@ public class ProductController {
     }
 
     @PostMapping("/products")
-    public Mono<Product> save(@RequestBody Product product){
+    public Mono<Product> save(@RequestBody Product product) {
         return productRepository.save(product);
     }
 
     @PutMapping("/products")
-    public Mono<Product> update(@RequestBody Product product){
+    public Mono<Product> update(@RequestBody Product product) {
         return productRepository.save(product);
     }
 
