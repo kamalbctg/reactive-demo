@@ -3,6 +3,7 @@ package com.demo.flux;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.ConnectableFlux;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
@@ -15,7 +16,7 @@ import java.util.List;
 class TransformAndCombineTests {
 
     @Test
-    void publisherWithFilter() {
+    void filterTest() {
         /**
          * Evaluate each source value against the given Predicate. If the predicate test
          * succeeds, the value is emitted. If the predicate test fails, the value is ignored
@@ -29,166 +30,137 @@ class TransformAndCombineTests {
     }
 
     @Test
-    void streamOfFluxWithMap() {
+    void mapTest() {
         /**
          * Transform the items emitted by this Flux by applying a synchronous function to each item
          */
         Flux.fromIterable(getUsers())
-                .map(u -> toLowerCase(u.getName()))
+                .map(u -> toUpperCase(u.getName()))
                 .doOnNext(System.out::println)
                 .blockLast();
     }
 
-    //A FlatMap divides an Observable into many singular Observables. Hence,
-    // instead of sending each of the Observable values one by one, a
-    // they are completed.
     @Test
-    void streamOfFluxWithFlatmap() {
+    void flatMapTest() {
+        /**
+         Transform the elements emitted by this Flux asynchronously into Publishers, then flatten these
+         inner publishers into a single Flux through merging, which allow them to interleave.
+         */
         Flux.fromIterable(getUsers())
-                // .map(u -> getUserAcl(u.getName()))
-                .flatMap(u -> Flux.just(toUpperCase(u.getName())))
-                .doOnNext(d -> System.out.println(d))
-                .blockLast();
-
-    }
-
-    // FlatMap does everything in parallel and then merges the results in whatever order
-    @Test
-    void streamOfFluxWithFlatmapOrderTest() {
-        Flux.fromIterable(getUsers())
-                .window(2)
-                .flatMap(f -> f.map(u -> this.toUpperCase(u.getName())).subscribeOn(Schedulers.parallel()))
+                //.map(u -> toLowerCase(u.getName()))
+                .flatMap(u -> toLowerCase(u.getName()))
+                .log()
                 .doOnNext(d -> System.out.println(d))
                 .blockLast();
 
     }
 
     @Test
-    void streamOfFluxWithFlatMapSequentialTest() {
+    void flatMapParallelTest() {
+        /**
+         parallel execution
+         */
         Flux.fromIterable(getUsers())
                 .window(2)
-                .flatMapSequential(f -> f.map(u -> this.toUpperCase(u.getName())).subscribeOn(Schedulers.parallel()))
+                .flatMap(users -> users.flatMap(u -> toLowerCase(u.getName())).subscribeOn(Schedulers.parallel()).log())
+                .log()
                 .doOnNext(d -> System.out.println(d))
                 .blockLast();
 
     }
 
-    //similar to a flatMap except that it keeps the order of the observables.
     @Test
-    void streamOfFluxWithConcatMap() {
+    void concatMapTest() {
+        /**
+         similar to a flatMap except that it keeps the order of the observables
+         */
         Flux.fromIterable(getUsers())
                 .window(2)
-                .concatMap(f -> f.map(u -> this.toUpperCase(u.getName())).subscribeOn(Schedulers.parallel()))
+                .concatMap(users -> users.flatMap(u -> toLowerCase(u.getName())).subscribeOn(Schedulers.parallel()).log())
+                .log()
                 .doOnNext(d -> System.out.println(d))
                 .blockLast();
 
     }
+
 
     //A SwitchMap flattens the source observable but only returns the last emitted single observable.
     @Test
-    void streamOfFluxWithSwitchMap() {
+    void switchMapTest() {
+        /**
+         * SwitchMap flattens the source observable but only returns the last emitted single observable.
+         * */
         Flux.fromIterable(getUsers())
                 .window(2)
-                .switchMap(f -> f.map(u -> this.toUpperCase(u.getName())).subscribeOn(Schedulers.parallel()))
+                .switchMap(users -> users.flatMap(u -> toLowerCase(u.getName())).subscribeOn(Schedulers.parallel()).log())
+                .log()
                 .doOnNext(d -> System.out.println(d))
                 .blockLast();
     }
 
     //combine stream without order.
     @Test
-    void combineFlux() {
+    void mergeTest() {
+        Flux<String> flux1 = Flux.just("a", "b", "c");
+        Flux<String> flux2 = Flux.just("e", "f", "g");
+
+        Flux<String> mergedFlux = Flux.merge(flux1, flux2);
+
+        StepVerifier.create(mergedFlux.log())
+                .expectNext("a", "b", "c", "e", "f", "g")
+                .verifyComplete();
+    }
+
+    @Test
+    void mergeWithDelayTest() {
         Flux<String> flux1 = Flux.just("a", "b", "c").delayElements(Duration.ofSeconds(1));
         Flux<String> flux2 = Flux.just("e", "f", "g").delayElements(Duration.ofSeconds(1));
 
         Flux<String> mergedFlux = Flux.merge(flux1, flux2);
 
-        StepVerifier.create(mergedFlux.log()).expectNextCount(6).verifyComplete();
+        StepVerifier.create(mergedFlux.log())
+                //.expectNext("a", "b", "c","e", "f", "g")
+                .expectNextCount(6)
+                .verifyComplete();
     }
 
-    //combine stream with order with sync
     @Test
-    void concatFlux() {
+    void concatTest() {
         Flux<String> flux1 = Flux.just("a", "b", "c").delayElements(Duration.ofSeconds(1));
         Flux<String> flux2 = Flux.just("e", "f", "g").delayElements(Duration.ofSeconds(1));
 
-        Flux<String> mergedFlux = Flux.merge(flux1, flux2);
+        Flux<String> mergedFlux = Flux.concat(flux1, flux2);
 
-        StepVerifier.create(mergedFlux.log()).expectNextCount(6).verifyComplete();
+        StepVerifier.create(mergedFlux.log())
+                .expectNext("a", "b", "c", "e", "f", "g")
+                .verifyComplete();
     }
 
-    //combine stream with order
+
     @Test
-    void zipFlux() {
-        Flux<String> flux1 = Flux.just("a", "b", "c").delayElements(Duration.ofSeconds(1));
-        Flux<String> flux2 = Flux.just("e", "f", "g").delayElements(Duration.ofSeconds(1));
+    void zipTest() {
+        Flux<String> flux1 = Flux.just("a", "b", "c");
+        Flux<String> flux2 = Flux.just("g", "f", "e");
 
         Flux<Tuple2<String, String>> mergedFlux = Flux.zip(flux1, flux2);
-
-        StepVerifier.create(mergedFlux.log()).expectNextCount(3).verifyComplete();
+        Flux<String> combined = mergedFlux.map(t -> t.getT1() + t.getT2());
+        StepVerifier.create(combined.log())
+                .expectNext("ag", "bf", "ce")
+                .verifyComplete();
     }
 
-    //combine stream with order
-    @Test
-    void zipWithFlux() {
-        Flux<String> flux1 = Flux.just("a", "b", "c").delayElements(Duration.ofSeconds(1));
-        Flux<String> flux2 = Flux.just("e", "f", "g").delayElements(Duration.ofSeconds(1));
-
-        Flux<Tuple2<String, String>> mergedFlux = flux1.zipWith(flux1);
-
-        StepVerifier.create(mergedFlux.log()).expectNextCount(3).verifyComplete();
-    }
-
-    //Emit data from the beginning
-    @Test
-    public void coldPublisher() throws InterruptedException {
-        Flux<String> flux = Flux.just("a", "b", "c").delayElements(Duration.ofSeconds(1));
-
-        flux.log().subscribe(it -> System.out.println("subscribe-1" + it));
-
-        Thread.sleep(Duration.ofSeconds(1).toMillis());
-
-        flux.log().subscribe(it -> System.out.println("subscribe-2" + it));
-    }
-
-    //Emit data from the beginning
-    @Test
-    public void hotPublisher() throws InterruptedException {
-        ConnectableFlux<String> flux = Flux.just("a", "b", "c", "d", "e")
-                .delayElements(Duration.ofSeconds(1))
-                .publish();
-        flux.connect();
-
-        flux.log().subscribe(it -> System.out.println("subscribe-1" + it));
-
-        Thread.sleep(Duration.ofSeconds(3).toMillis());
-
-        flux.log().subscribe(it -> System.out.println("subscribe-2" + it));
-        Thread.sleep(Duration.ofSeconds(6).toMillis());
-    }
 
     @Test
-    public void hotPublisher2() throws InterruptedException {
-        Flux<String> flux = Flux.just("a", "b", "c", "d", "e")
-                .delayElements(Duration.ofSeconds(1))
-                .share();
+    void zipWithTest() {
+        Flux<String> flux1 = Flux.just("a", "b", "c");
+        Flux<String> flux2 = Flux.just("g", "f", "e");
 
-
-        flux.log().subscribe(it -> System.out.println("subscribe-1" + it));
-
-        Thread.sleep(Duration.ofSeconds(3).toMillis());
-
-        flux.log().subscribe(it -> System.out.println("subscribe-2" + it));
-        Thread.sleep(Duration.ofSeconds(6).toMillis());
+        Flux<Tuple2<String, String>> mergedFlux = flux1.zipWith(flux2);
+        Flux<String> combined = mergedFlux.map(t -> t.getT1() + t.getT2());
+        StepVerifier.create(combined.log())
+                .expectNext("ag", "bf", "ce")
+                .verifyComplete();
     }
-
-    @Test
-    void streamOfFluxWithCreate() {
-//        Flux<User> userFlux = getUsers().take(2).log();
-//        StepVerifier.create(userFlux)
-//                .expectNextCount(2)
-//                .verifyComplete();
-    }
-
 
     private List<String> toUpperCase(String s) {
         try {
@@ -199,13 +171,13 @@ class TransformAndCombineTests {
         return List.of(s.toUpperCase(), Thread.currentThread().getName());
     }
 
-    private String toLowerCase(String s) {
+    private Mono<String> toLowerCase(String s) {
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return s.toLowerCase();
+        return Mono.just(s.toLowerCase());
     }
 
     private List<User> getUsers() {
