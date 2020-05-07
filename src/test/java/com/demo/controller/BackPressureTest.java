@@ -74,12 +74,13 @@ class BackPressureTest {
     }
 
     @Test
-    void getProductStreamWithBackPressure3() throws InterruptedException {
+    void getProductStreamWithBackPressureOnparallel() throws InterruptedException {
         WebClient client = WebClient.create("http://localhost:8080/");
         client.get()
                 .uri("v1/products").accept(MediaType.APPLICATION_JSON)
                 .retrieve().bodyToFlux(Product.class)
                 .subscribeOn(Schedulers.parallel()).log()
+                .onBackpressureError()
                 .subscribe(new Subscriber<Product>() {
                     private Subscription subscription;
                     private Integer count = 0;
@@ -103,12 +104,10 @@ class BackPressureTest {
 
                     @Override
                     public void onError(Throwable t) {
-                        // TODO Auto-generated method stub
                     }
 
                     @Override
                     public void onComplete() {
-                        // TODO Auto-generated method stub
                     }
                 });
 
