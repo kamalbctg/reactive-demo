@@ -98,6 +98,13 @@ class CreatingSequenceTests {
     }
 
     @Test
+    void streamOfFluxWithPush() {
+        Flux.push(emitter -> IntStream.range(2000, 3000).forEach(emitter::next))
+                .delayElements(Duration.ofMillis(1))
+                .subscribe(e -> System.out.println("onNext: {}"+e));
+    }
+
+    @Test
     void streamOfFluxWithCreate() {
         //Programmatically create a Flux with the capability of emitting multiple elements in a synchronous or
         // asynchronous manner through the FluxSink API. This includes emitting elements from multiple threads.

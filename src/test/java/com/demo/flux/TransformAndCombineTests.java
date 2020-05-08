@@ -160,6 +160,7 @@ class TransformAndCombineTests {
         StepVerifier.create(combined.log())
                 .expectNext("ag", "bf", "ce")
                 .verifyComplete();
+
     }
 
     private List<String> toUpperCase(String s) {

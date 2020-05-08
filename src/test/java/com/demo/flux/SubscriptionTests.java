@@ -18,6 +18,14 @@ class SubscriptionTests {
     }
 
     @Test
+    void subscriptionThenManyTest() {
+        Flux.just(1, 2, 3)
+                .thenMany(Flux.just(4, 5))
+                .log()
+                .subscribe(System.out::println);
+    }
+
+    @Test
     void subscriptionErrorTest() {
         Flux.just("A", "B", "C")
                 .concatWith(Flux.error(new RuntimeException("Opps! something went wrong")))

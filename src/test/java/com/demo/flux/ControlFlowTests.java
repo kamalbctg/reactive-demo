@@ -15,6 +15,17 @@ import java.util.List;
 class ControlFlowTests {
 
     @Test
+    void sampleTest() throws InterruptedException {
+        Flux.range(1, 100)
+                .delayElements(Duration.ofMillis(1))
+                .sample(Duration.ofMillis(20))
+                .subscribe( d -> System.out.println("onNext: {}" + d));
+
+        Thread.sleep(Duration.ofSeconds(2).toMillis());
+
+    }
+
+    @Test
     void takeTest() {
         Flux<String> flux1 = Flux.just("a", "b", "c");
         StepVerifier.create(flux1.take(2).log()).expectNextCount(2).verifyComplete();
