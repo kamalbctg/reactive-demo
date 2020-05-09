@@ -1,6 +1,7 @@
 package com.demo.controller;
 
 import com.demo.model.Product;
+import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.reactivestreams.Subscriber;
@@ -9,9 +10,15 @@ import org.springframework.context.annotation.ImportResource;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.BaseSubscriber;
+import reactor.core.publisher.BufferOverflowStrategy;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(SpringRunner.class)
 @ImportResource("application.properties")
@@ -112,5 +119,85 @@ class BackPressureTest {
                 });
 
         Thread.sleep(Duration.ofSeconds(2).toMillis());
+    }
+
+
+    @Test
+    public void testBackPressure() throws  Exception{
+        Flux<Integer> numberGenerator = Flux.create(x -> {
+            System.out.println("Requested Events :"+x.requestedFromDownstream());
+            int number = 1;
+            while(number < 100) {
+                x.next(number);
+                number++;
+            }
+            x.complete();
+        }, FluxSink.OverflowStrategy.ERROR);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        numberGenerator.subscribe(new BaseSubscriber<Integer>() {
+            @Override
+            protected void hookOnSubscribe(Subscription subscription) {
+                request(1);
+            }
+
+            @Override
+            protected void hookOnNext(Integer value) {
+                System.out.println(value);
+            }
+
+            @Override
+            protected void hookOnError(Throwable throwable) {
+                throwable.printStackTrace();
+                latch.countDown();
+            }
+
+            @Override
+            protected void hookOnComplete() {
+                latch.countDown();
+            }
+        });
+        latch.await(1L, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testBackPressureDrop() throws  Exception{
+        Flux<Integer> numberGenerator = Flux.create(x -> {
+            System.out.println("Requested Events :"+x.requestedFromDownstream());
+            int number = 1;
+            while(number < 100) {
+                x.next(number);
+                number++;
+            }
+            x.complete();
+        });
+
+        CountDownLatch latch = new CountDownLatch(1);
+        numberGenerator
+                //.onBackpressureDrop(x -> System.out.println("Dropped :"+x))
+                .onBackpressureBuffer(2,x -> System.out.println("Dropped :"+x), BufferOverflowStrategy.DROP_LATEST)
+                .subscribe(new BaseSubscriber<Integer>() {
+            @Override
+            protected void hookOnSubscribe(Subscription subscription) {
+                request(1);
+            }
+
+            @Override
+            protected void hookOnNext(Integer value) {
+                System.out.println(value);
+            }
+
+            @Override
+            protected void hookOnError(Throwable throwable) {
+                throwable.printStackTrace();
+                latch.countDown();
+            }
+
+            @Override
+            protected void hookOnComplete() {
+                latch.countDown();
+            }
+        });
+        latch.await(2l , TimeUnit.SECONDS);
     }
 }

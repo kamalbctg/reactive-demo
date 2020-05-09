@@ -147,5 +147,4 @@ class CreatingSequenceTests {
         Thread.sleep(Duration.ofSeconds(3).toMillis());
     }
 
-
 }
