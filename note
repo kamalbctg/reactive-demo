@@ -1,0 +1,30 @@
+Slide-1:
+--------
+In traditional approach describes computation in terms of statements that change a program state that is expresses the
+logic of a computation with describing its control flow(How do).
+In sort
+    Declarative - specify what to do, not how to do it
+    Imperative - specify both what and how
+
+Further, Traditional application do not have back pressure support application might be overwhlemed by data sent bt DB
+as a result as a result. Only way to control by using paging
+
+Slide-2:
+--------
+Threads are not blocked or waiting for a request to complete. Instead they are notified when the request is complete /
+the data changes. Till then they can do other tasks. This makes us to use less resources to serve more requests.
+
+Publisher, is observable whom we are interested in listening to! These are the data sources or streams. They can be Hot or Cold
+---------
+Observer, subscribes to Observable/Publisher. Observer reacts to the data emitted by the Publisher. Publisher pushes the
+--------
+data to the Observers. Publishers are read-only whereas Observers are write-only.
+
+Subscription, Observer subscribes to Observable/Publisher via an object called Subscription. Publisher’s emitting
+------------
+rate might be higher than Observer’s processing rate. So in that case, Observer might send some feedback to the
+Publisher how it wants the data / what needs to be done when the publisher’s emitting rate is high via Subscription object.
+Processor acts as both Publisher and Observer. They stay in between a Publisher and an Observer.  It consumes the
+messages from a publisher, manipulates it and sends the processed message to its subscribers. They can be used to
+chain multiple processors in between a Publisher or an Observer.
+
