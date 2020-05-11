@@ -1,16 +1,14 @@
-Slide-1:
---------
-In traditional approach describes computation in terms of statements that change a program state that is expresses the
-logic of a computation with describing its control flow(How do).
-In sort
-    Declarative - specify what to do, not how to do it
-    Imperative - specify both what and how
+1:
+In traditional approach, we describes computation in terms of statements that change a program state that is
+expresses the logic of a computation with describing its control flow. In sort, traditional approach Imperative mean
+specify both what and how
 
-Further, Traditional application do not have back pressure support application might be overwhlemed by data sent bt DB
-as a result as a result. Only way to control by using paging
+Declarative - specify what to do, not how to do it
 
-Slide-2:
---------
+
+Further, Traditional application do not have back pressure support consumer can be overwhelmed by data data producer.
+
+2:
 Threads are not blocked or waiting for a request to complete. Instead they are notified when the request is complete /
 the data changes. Till then they can do other tasks. This makes us to use less resources to serve more requests.
 
@@ -22,9 +20,33 @@ data to the Observers. Publishers are read-only whereas Observers are write-only
 
 Subscription, Observer subscribes to Observable/Publisher via an object called Subscription. Publisher’s emitting
 ------------
-rate might be higher than Observer’s processing rate. So in that case, Observer might send some feedback to the
+Some time the data emittion rate might be higher than Observer’s processing rate. So in that case, Observer might send some feedback to the
 Publisher how it wants the data / what needs to be done when the publisher’s emitting rate is high via Subscription object.
 Processor acts as both Publisher and Observer. They stay in between a Publisher and an Observer.  It consumes the
 messages from a publisher, manipulates it and sends the processed message to its subscribers. They can be used to
 chain multiple processors in between a Publisher or an Observer.
 
+3:
+Rules for reactive stream to follow created By NetFlix, Pivotal etc
+
+OnNext: Whenever the Observable emits an event, this method is called on the Observer so we can perform some action on it.
+
+OnCompleted: This method is called after the last call of the onNext method, indicating that the sequence of events associated
+             with an Observable is complete and it has not encountered any errors.
+
+OnError: This method is called when it has encountered some error to generate the expected data, like an unhandled exception.
+
+Hot Publisher Image a Movie theater / Radio station. It doesn't matter if people are really listening to the radio. They will be
+always streaming songs/news. Listeners can observe anytime they want. But all listeners get they same info at any given moment.
+They get the news/songs whatever broadcast in that moment. Observers lose the information if they joined late. Hot Publishers are like
+this Radio Station.
+
+Cold Publisher,Publishers by default do not produce any value unless at least 1 observer subscribes to it. Publishers create new data
+producers for each new subscription.
+
+4:
+work with infinite data containers, onNext x 0..N [onError | onComplete]
+
+
+5: In contrast with Flux, the Mono type defines a stream that can produce at most one element and can be described by the following formula:
+onNext x 0..1 [onError | onComplete]
